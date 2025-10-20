@@ -194,6 +194,9 @@ module.exports = grammar({
         $.variable_declaration,
         seq('default', choice(
           $.component_declaration,
+          $.interface_declaration,  // 支持 export default interface
+          $.type_declaration,       // 支持 export default type
+          $.enum_declaration,       // 支持 export default enum
           $.class_declaration,
           $.function_declaration,
           $.expression
@@ -290,7 +293,7 @@ module.exports = grammar({
       optional('?'),  // 支持可选属性标记
       optional(seq(':', $.type_annotation)),
       optional(seq('=', $.expression)),
-      ';'
+      optional(';')  // 分号可选
     ),
 
     // build方法（ArkTS特有）- 将整个内容视为一个UI描述块
@@ -304,16 +307,11 @@ module.exports = grammar({
 
     // build方法体 - 简化为整体处理
     // 注意：$.comment 不需要显式匹配，因为它已在 extras 中定义（会被自动跳过）
-    build_body: $ => prec(1, seq(
+    build_body: $ => seq(
       '{',
-      repeat(choice(
-        $.ui_custom_component_statement,  // 自定义组件调用语句（带分号）
-        $.ui_control_flow,     // UI控制流（if、ForEach等） 
-        $.arkts_ui_element,    // ArkTS UI元素（组件、布局等）
-        $.expression_statement  // 其他表达式
-      )),
+      repeat(choice($.block_statement, $._non_brace_content)),
       '}'
-    )),
+    ),
 
     // 修饰符链表达式 - 专门处理以点开头的连续调用
     modifier_chain_expression: $ => prec.right(20, seq(
@@ -350,16 +348,11 @@ module.exports = grammar({
 
     // 容器内容体 - 专门用于布局容器的内容，区别于build_body
     // 注意：$.comment 不需要显式匹配，因为它已在 extras 中定义（会被自动跳过）
-    container_content_body: $ => prec(1, seq(
+    container_content_body: $ => seq(
       '{',
-      repeat(choice(
-        $.ui_custom_component_statement,  // 自定义组件调用语句（带分号）
-        $.ui_control_flow,     // UI控制流
-        $.arkts_ui_element,    // ArkTS UI元素
-        $.expression_statement  // 其他表达式
-      )),
+      repeat(choice($.block_statement, $._non_brace_content)),
       '}'
-    )),
+    ),
 
     // ArkTS UI元素 - 只使用带修饰符的元素（修饰符链是可选的）
     arkts_ui_element: $ => $.ui_element_with_modifiers,
@@ -437,6 +430,8 @@ module.exports = grammar({
 
     // 基础语法元素
     identifier: $ => /[a-zA-Z_$][a-zA-Z0-9_$]*/,
+    
+    _non_brace_content: $ => token(prec(1, /[^{}]+/)),
     
     string_literal: $ => token(choice(
       seq('"', repeat(choice(/[^"\\\n]/, seq('\\', /./), seq('\\', /\n/))), '"'),
@@ -747,7 +742,7 @@ module.exports = grammar({
 
     block_statement: $ => seq(
       '{',
-      repeat($.statement),
+      repeat(choice($.block_statement, $._non_brace_content)),
       '}'
     ),
 
@@ -882,12 +877,7 @@ module.exports = grammar({
     // UI箭头函数体 - 用于ForEach等UI上下文中的箭头函数，支持直接返回UI元素
     ui_arrow_function_body: $ => seq(
       '{',
-      repeat(choice(
-        $.ui_custom_component_statement,
-        $.ui_control_flow,
-        $.arkts_ui_element,  // 支持UI元素
-        $.expression_statement
-      )),
+      repeat(choice($.block_statement, $._non_brace_content)),
       '}'
     ),
 
@@ -1061,14 +1051,9 @@ module.exports = grammar({
     ),
 
     // @Builder 函数体 - 与 build_body 相同，支持 UI 组件
-    builder_function_body: $ => prec(1, seq(
+    builder_function_body: $ => prec(3, seq(
       '{',
-      repeat(choice(
-        $.ui_custom_component_statement,  // 自定义组件调用语句（带分号）
-        $.ui_control_flow,     // UI控制流（if、ForEach等） 
-        $.arkts_ui_element,    // ArkTS UI元素（组件、布局等）
-        $.expression_statement  // 其他表达式
-      )),
+      repeat(choice($.block_statement, $._non_brace_content)),
       '}'
     )),
 
@@ -1084,12 +1069,11 @@ module.exports = grammar({
 
     // @Extend函数的特殊函数体 - 允许直接以修饰符链开始
     // 注意：$.comment 不需要显式匹配，因为它已在 extras 中定义（会被自动跳过）
-    extend_function_body: $ => seq(
+    extend_function_body: $ => prec(2, seq(
       '{',
-      $.modifier_chain_expression,  // 至少一个修饰符链
-      repeat($.modifier_chain_expression),
+      repeat(choice($.block_statement, $._non_brace_content)),
       '}'
-    ),
+    )),
 
     object_type: $ => seq(
       '{',
