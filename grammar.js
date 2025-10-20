@@ -58,7 +58,9 @@ module.exports = grammar({
     [$.tuple_type, $.array_literal],  // 元组类型与数组字面量的冲突
     [$.argument_list, $.new_expression],  // 参数列表与 new 表达式的冲突
     [$.primary_type, $.parameter],  // 括号类型与函数参数列表的冲突
-    [$.expression, $.primary_type, $.parameter]  // 括号类型与函数参数列表的三方冲突
+    [$.expression, $.primary_type, $.parameter],  // 括号类型与函数参数列表的三方冲突
+    [$.parenthesized_expression, $.parenthesized_type],  // 括号表达式与括号类型的冲突
+    [$.conditional_expression, $.conditional_type]  // 条件表达式与条件类型的冲突
   ],
 
   rules: {
@@ -104,7 +106,7 @@ module.exports = grammar({
       optional(';')
     ),
 
-    // 带装饰器的导出声明（用于 @Builder export function 等）
+    // 带装饰器的导出声明（用于 @Builder export function、@Observed export class 等）
     decorated_export_declaration: $ => seq(
       repeat1($.decorator),  // 至少一个装饰器
       'export',
@@ -123,8 +125,20 @@ module.exports = grammar({
             $.block_statement         // 普通函数体
           )
         ),
+        // export class
+        seq(
+          optional('abstract'),
+          'class',
+          $.identifier,
+          optional($.type_parameters),
+          optional(seq('extends', $.type_annotation)),
+          optional($.implements_clause),
+          $.class_body
+        ),
+        // export default
         seq('default', choice(
           $.function_declaration,
+          $.class_declaration,
           $.expression
         ))
       ),
@@ -165,29 +179,56 @@ module.exports = grammar({
       optional(';')
     ),
 
-    // 装饰器 - ArkTS核心特性，支持更多装饰器类型
+    // 装饰器 - ArkTS核心特性，支持完整的装饰器类型
     decorator: $ => seq(
       '@',
       choice(
-        // 常用装饰器
+        // 基础装饰器
         'Entry',          // 入口装饰器
-        'Component',
-        'State', 
-        'Prop',
-        'Link',
-        'Provide',
-        'Consume',
-        'Builder',
-        'Styles',
-        'Extend',
-        'AnimatableExtend',
-        'Watch',
-        'StorageLink',
-        'StorageProp',
-        'LocalStorageLink',
-        'LocalStorageProp',
-        'ObjectLink',
-        'Observed',
+        'Component',      // 组件装饰器（V1）
+        'ComponentV2',    // 组件装饰器（V2）
+        
+        // 状态管理 V1 装饰器
+        'State',          // 组件内部状态
+        'Prop',           // 父子单向同步
+        'Link',           // 父子双向同步
+        'Provide',        // 与后代组件双向同步（提供方）
+        'Consume',        // 与后代组件双向同步（消费方）
+        'ObjectLink',     // 嵌套对象双向同步
+        'Observed',       // 类对象观测（V1）
+        'Watch',          // 状态变化监听
+        'StorageLink',    // AppStorage双向同步
+        'StorageProp',    // AppStorage单向同步
+        'LocalStorageLink',    // LocalStorage双向同步
+        'LocalStorageProp',    // LocalStorage单向同步
+        
+        // 状态管理 V2 装饰器
+        'Local',          // 组件内部状态（V2）
+        'Param',          // 组件外部输入（V2）
+        'Once',           // 初始化同步一次
+        'Event',          // 规范组件输出
+        'Provider',       // 跨组件层级提供（V2）
+        'Consumer',       // 跨组件层级消费（V2）
+        'Monitor',        // 状态变量修改监听
+        'Computed',       // 计算属性
+        'Type',           // 标记类型
+        'ObservedV2',     // 类对象观测（V2）
+        'Trace',          // 属性追踪（V2）
+        
+        // UI构建装饰器
+        'Builder',        // 自定义构建函数
+        'BuilderParam',   // 引用@Builder函数
+        'LocalBuilder',   // 维持组件关系
+        'Styles',         // 定义组件重用样式
+        'Extend',         // 扩展原生组件样式
+        'AnimatableExtend',    // 可动画扩展
+        
+        // 其他装饰器
+        'Require',        // 校验构造传参
+        'Reusable',       // 组件复用
+        'Concurrent',     // 并发函数标记
+        'Track',          // 精细化属性观测
+        
         // 或者其他自定义装饰器
         $.identifier
       ),
@@ -299,11 +340,8 @@ module.exports = grammar({
       '}'
     )),
 
-    // ArkTS UI元素 - 先尝试带修饰符的元素，其次是普通元素
-    arkts_ui_element: $ => choice(
-      $.ui_element_with_modifiers,
-      $.ui_component
-    ),
+    // ArkTS UI元素 - 只使用带修饰符的元素（修饰符链是可选的）
+    arkts_ui_element: $ => $.ui_element_with_modifiers,
 
     // UI自定义组件调用语句 - 自定义组件调用 + 必需的分号
     // 根据ArkUI官方规范：自定义组件调用属于表达式语句，需要分号结尾
@@ -376,7 +414,7 @@ module.exports = grammar({
       $.call_expression,
       $.member_expression,
       $.subscript_expression,       // 索引访问表达式 arr[index]
-      $.modifier_chain_expression,  // 新增：修饰符链表达式
+      // 注意：modifier_chain_expression 不应该是独立的expression，它只在UI组件后面出现
       $.parenthesized_expression,
       $.state_binding_expression,  // 状态绑定表达式
       $.conditional_expression,
@@ -435,14 +473,14 @@ module.exports = grammar({
       $.expression
     )),
 
-    // 条件表达式 - 使用 prec.dynamic 确保在有歧义时优先解析为条件表达式
-    conditional_expression: $ => prec.dynamic(9, prec.right(9, seq(
+    // 条件表达式 - 优先级低于二元运算符，高于赋值
+    conditional_expression: $ => prec.right(4, seq(
       $.expression,
       '?',
       $.expression,
       ':',
       $.expression
-    ))),
+    )),
 
     // @ 表达式（用于装饰器冲突解决）
     at_expression: $ => seq('@', $.expression),
@@ -660,7 +698,7 @@ module.exports = grammar({
     variable_declarator: $ => seq(
       $.identifier,
       optional(seq(':', $.type_annotation)),
-      optional(seq('=', $.expression))
+      optional(prec(10, seq('=', $.expression)))  // 提高赋值表达式的优先级
     ),
 
     return_statement: $ => seq(
@@ -761,7 +799,7 @@ module.exports = grammar({
       $.block_statement
     ),
 
-    // 调用表达式 - 降低优先级，避免与修饰符链冲突
+    // 调用表达式 - 降低优先级，避免与修饰筦链冲突
     // 支持泛型调用，如 func<T>(arg)
     call_expression: $ => prec.left(1, seq(
       $.expression,
