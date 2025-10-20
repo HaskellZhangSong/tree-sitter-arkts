@@ -66,6 +66,7 @@
 
 **模块系统**
 - ✅ 导入/导出声明
+- ✅ 动态 `import()` 表达式（ES2020+）
 - ✅ 装饰器函数导出（`export @Builder function`）
 - ✅ 默认导出（`export default interface/type/enum`）
 

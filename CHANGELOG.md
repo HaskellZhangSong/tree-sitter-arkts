@@ -1,5 +1,31 @@
 # ArkTS Tree-sitter 更新日志
 
+## [Unreleased]
+
+### ✨ 新增特性
+- ✅ **动态 import() 表达式支持**（ES2020+）
+  - 支持顶层独立调用：`import('@ohos/module')`
+  - 支持 async/await 模式：`await import('./Module')`
+  - 支持 Promise 链式调用：`import('./Module').then(...)`
+  - 支持动态路径（变量）：`import(modulePath)`
+  - 支持条件导入、批量导入、在类方法中使用等所有场景
+  - 新增 `import_expression` AST 节点
+  - 新增文档：`DYNAMIC_IMPORT_SUPPORT.md`
+  - 新增测试文件：`test/test_import_expression.ets`
+
+### 🐛 修复
+- 🐛 **修复 `@Component export struct` 解析错误**
+  - 移除 `component_declaration` 中的 `optional('export')`
+  - 确保 `@Component export struct` 被正确解析为 `decorated_export_declaration`
+  - 调整 `source_file` 中规则的优先级，`decorated_export_declaration` 优先于 `component_declaration`
+  - 新增测试文件：`test/test_component_export.ets`
+
+### 📝 文档更新
+- 📝 更新 README，新增动态 import() 特性说明
+- 📝 新增 DYNAMIC_IMPORT_SUPPORT.md 详细文档
+
+---
+
 ## [0.1.6] - 2025-10-20
 
 ### 🚀 解析能力重大突破

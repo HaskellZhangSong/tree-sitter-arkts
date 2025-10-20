@@ -13,6 +13,14 @@
           },
           {
             "type": "SYMBOL",
+            "name": "decorated_export_declaration"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "decorated_function_declaration"
+          },
+          {
+            "type": "SYMBOL",
             "name": "component_declaration"
           },
           {
@@ -37,19 +45,15 @@
           },
           {
             "type": "SYMBOL",
-            "name": "decorated_function_declaration"
-          },
-          {
-            "type": "SYMBOL",
-            "name": "decorated_export_declaration"
-          },
-          {
-            "type": "SYMBOL",
             "name": "variable_declaration"
           },
           {
             "type": "SYMBOL",
             "name": "export_declaration"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "expression_statement"
           }
         ]
       }
@@ -1038,18 +1042,6 @@
             "type": "SYMBOL",
             "name": "decorator"
           }
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "STRING",
-              "value": "export"
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
         },
         {
           "type": "STRING",
@@ -2359,6 +2351,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "import_expression"
+        },
+        {
+          "type": "SYMBOL",
           "name": "arrow_function"
         },
         {
@@ -2420,6 +2416,10 @@
         {
           "type": "SYMBOL",
           "name": "update_expression"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "non_null_assertion_expression"
         }
       ]
     },
@@ -2946,32 +2946,36 @@
       }
     },
     "conditional_expression": {
-      "type": "PREC_RIGHT",
-      "value": 4,
+      "type": "PREC_DYNAMIC",
+      "value": 10,
       "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "SYMBOL",
-            "name": "expression"
-          },
-          {
-            "type": "STRING",
-            "value": "?"
-          },
-          {
-            "type": "SYMBOL",
-            "name": "expression"
-          },
-          {
-            "type": "STRING",
-            "value": ":"
-          },
-          {
-            "type": "SYMBOL",
-            "name": "expression"
-          }
-        ]
+        "type": "PREC_RIGHT",
+        "value": 4,
+        "content": {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "expression"
+            },
+            {
+              "type": "STRING",
+              "value": "?"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "expression"
+            },
+            {
+              "type": "STRING",
+              "value": ":"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "expression"
+            }
+          ]
+        }
       }
     },
     "at_expression": {
@@ -3021,6 +3025,31 @@
           {
             "type": "SYMBOL",
             "name": "type_annotation"
+          }
+        ]
+      }
+    },
+    "import_expression": {
+      "type": "PREC",
+      "value": 21,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "import"
+          },
+          {
+            "type": "STRING",
+            "value": "("
+          },
+          {
+            "type": "SYMBOL",
+            "name": "expression"
+          },
+          {
+            "type": "STRING",
+            "value": ")"
           }
         ]
       }
@@ -6037,21 +6066,25 @@
           ]
         },
         {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "property_name"
-            },
-            {
-              "type": "STRING",
-              "value": ":"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "expression"
-            }
-          ]
+          "type": "PREC",
+          "value": -1,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "property_name"
+              },
+              {
+                "type": "STRING",
+                "value": ":"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "expression"
+              }
+            ]
+          }
         },
         {
           "type": "SYMBOL",
@@ -6267,6 +6300,23 @@
         }
       ]
     },
+    "non_null_assertion_expression": {
+      "type": "PREC_LEFT",
+      "value": 22,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "expression"
+          },
+          {
+            "type": "STRING",
+            "value": "!"
+          }
+        ]
+      }
+    },
     "new_expression": {
       "type": "PREC_RIGHT",
       "value": 21,
@@ -6422,6 +6472,14 @@
     [
       "conditional_expression",
       "parameter"
+    ],
+    [
+      "conditional_expression",
+      "binary_expression"
+    ],
+    [
+      "conditional_expression",
+      "property_assignment"
     ],
     [
       "modifier_chain_expression",

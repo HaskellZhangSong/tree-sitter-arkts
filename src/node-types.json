@@ -843,11 +843,19 @@
           "named": true
         },
         {
+          "type": "import_expression",
+          "named": true
+        },
+        {
           "type": "member_expression",
           "named": true
         },
         {
           "type": "new_expression",
+          "named": true
+        },
+        {
+          "type": "non_null_assertion_expression",
           "named": true
         },
         {
@@ -1185,6 +1193,21 @@
     }
   },
   {
+    "type": "import_expression",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "import_specifier",
     "named": true,
     "fields": {},
@@ -1344,6 +1367,21 @@
         },
         {
           "type": "type_arguments",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "non_null_assertion_expression",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "expression",
           "named": true
         }
       ]
@@ -1656,6 +1694,10 @@
         },
         {
           "type": "export_declaration",
+          "named": true
+        },
+        {
+          "type": "expression_statement",
           "named": true
         },
         {

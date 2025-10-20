@@ -31,6 +31,8 @@ module.exports = grammar({
     [$.if_statement, $.statement],
     [$.ui_if_statement, $.statement],  // ui_if_statement 与 statement 的歧义
     [$.conditional_expression, $.parameter],  // 条件表达式与可选参数的歧义
+    [$.conditional_expression, $.binary_expression],  // 条件表达式与二元表达式的歧义（关键修复！）
+    [$.conditional_expression, $.property_assignment],  // 条件表达式与对象属性赋值的歧义（修复 identifier ? identifier : value 语法）
     // 以下是 ArkTS UI 相关的必需冲突
     [$.modifier_chain_expression, $.member_expression],  // 修饰符链 `.xxx()` 与成员访问 `.xxx` 的歧义
     [$.block_statement, $.extend_function_body],  // 普通函数体与 @Extend 函数体的歧义
@@ -72,16 +74,17 @@ module.exports = grammar({
   rules: {
     source_file: $ => repeat(choice(
       $.import_declaration,
-      $.component_declaration,
+      $.decorated_export_declaration,  // 带装饰器的导出声明（包括 @Component export struct）
+      $.decorated_function_declaration,  // 带装饰器的函数声明
+      $.component_declaration,  // 非导出的组件声明
       $.interface_declaration,
       $.type_declaration,
       $.enum_declaration,  // 支持 enum 声明
       $.class_declaration,
       $.function_declaration,
-      $.decorated_function_declaration,  // 带装饰器的函数声明
-      $.decorated_export_declaration,  // 带装饰器的导出声明
       $.variable_declaration,
-      $.export_declaration
+      $.export_declaration,
+      $.expression_statement  // 支持顶层表达式语句（如动态import()）
     )),
 
     // 注释
@@ -256,12 +259,10 @@ module.exports = grammar({
     ),
 
     // 组件声明 - ArkTS核心特性
-    // 支持两种格式：
-    // 1. @Component struct ...
-    // 2. @Component export struct ...
+    // 仅用于非导出的组件声明：@Component struct ...
+    // 导出的组件声明使用 decorated_export_declaration：@Component export struct ...
     component_declaration: $ => seq(
       repeat($.decorator),
-      optional('export'),  // 支持装饰器后 export
       'struct',
       $.identifier,
       optional($.type_parameters),
@@ -456,6 +457,7 @@ module.exports = grammar({
       $.new_expression,             // new表达式
       $.await_expression,           // await表达式
       $.as_expression,              // 类型断言 (value as Type)
+      $.import_expression,          // 动态import()表达式
       $.arrow_function,
       $.function_expression,        // 函数表达式
       $.call_expression,
@@ -472,7 +474,8 @@ module.exports = grammar({
       $.object_literal,            // 对象字面量
       $.template_literal,          // 模板字面量
       $.resource_expression,       // $r()资源表达式
-      $.update_expression          // ++/--表达式
+      $.update_expression,         // ++/--表达式
+      $.non_null_assertion_expression  // 非空断言表达式 (value!)
     ),
 
     // 状态绑定表达式（$语法）
@@ -526,13 +529,14 @@ module.exports = grammar({
     )),
 
     // 条件表达式 - 优先级低于二元运算符，高于赋值
-    conditional_expression: $ => prec.right(4, seq(
+    // 使用较高的动态优先级，确保在与对象属性赋值歧义时优先匹配三元表达式
+    conditional_expression: $ => prec.dynamic(10, prec.right(4, seq(
       $.expression,
       '?',
       $.expression,
       ':',
       $.expression
-    )),
+    ))),
 
     // @ 表达式（用于装饰器冲突解决）
     at_expression: $ => seq('@', $.expression),
@@ -548,6 +552,14 @@ module.exports = grammar({
       $.expression,
       'as',
       $.type_annotation
+    )),
+
+    // 动态 import() 表达式
+    import_expression: $ => prec(21, seq(
+      'import',
+      '(',
+      $.expression,  // 支持字符串字面量或变量
+      ')'
     )),
 
     // 其他必需的规则定义会逐步添加
@@ -1134,7 +1146,8 @@ module.exports = grammar({
         optional(seq(':', $.type_annotation)),
         $.block_statement
       ),
-      seq($.property_name, ':', $.expression),
+      // 降低优先级，避免与三元表达式冲突
+      prec(-1, seq($.property_name, ':', $.expression)),
       $.identifier,  // 简写属性
       seq('...', $.expression)  // 展开运算符
     ),
@@ -1181,6 +1194,13 @@ module.exports = grammar({
       prec.left(22, seq($.expression, choice('++', '--'))),
       prec.right(22, seq(choice('++', '--'), $.expression))
     ),
+
+    // 非空断言表达式 - TypeScript/ArkTS 特有的后置运算符
+    // 用于告诉编译器某个值不为 null 或 undefined
+    non_null_assertion_expression: $ => prec.left(22, seq(
+      $.expression,
+      '!'
+    )),
 
     // new表达式 - 支持泛型实例化
     new_expression: $ => prec.right(21, seq(
