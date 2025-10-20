@@ -79,10 +79,10 @@ module.exports = grammar({
     )),
 
     // 注释
-    comment: $ => choice(
+    comment: $ => token(choice(
       seq('//', /.*/),
       seq('/*', /[^*]*\*+([^/*][^*]*\*+)*/, '/')
-    ),
+    )),
 
     // 导入声明
     import_declaration: $ => seq(
@@ -92,18 +92,24 @@ module.exports = grammar({
         seq(
           $.identifier,
           ',',
-          '{', commaSep($.identifier), '}',
+          '{', commaSep($.import_specifier), '}',
           'from',
           $.string_literal
         ),
         // 默认导入：import identifier from '...'
         seq($.identifier, 'from', $.string_literal),
         // 命名导入：import { ... } from '...'
-        seq('{', commaSep($.identifier), '}', 'from', $.string_literal),
+        seq('{', commaSep($.import_specifier), '}', 'from', $.string_literal),
         // 全部导入：import * as identifier from '...'
         seq('*', 'as', $.identifier, 'from', $.string_literal)
       ),
       optional(';')
+    ),
+
+    // 导入说明符 - 支持 as 别名
+    import_specifier: $ => choice(
+      $.identifier,
+      seq($.identifier, 'as', $.identifier)
     ),
 
     // 带装饰器的导出声明（用于 @Builder export function、@Observed export class 等）
@@ -390,10 +396,10 @@ module.exports = grammar({
     // 基础语法元素
     identifier: $ => /[a-zA-Z_$][a-zA-Z0-9_$]*/,
     
-    string_literal: $ => choice(
-      seq('"', repeat(choice(/[^"\\]/, $.escape_sequence)), '"'),
-      seq("'", repeat(choice(/[^'\\]/, $.escape_sequence)), "'")
-    ),
+    string_literal: $ => token(choice(
+      seq('"', repeat(choice(/[^"\\\n]/, seq('\\', /./), seq('\\', /\n/))), '"'),
+      seq("'", repeat(choice(/[^'\\\n]/, seq('\\', /./), seq('\\', /\n/))), "'")
+    )),
     
     escape_sequence: $ => seq(
       '\\',
@@ -738,13 +744,29 @@ module.exports = grammar({
       ';'
     ),
 
-    // for 循环
+    // for 循环 - 支持传统for循环、for...in 和 for...of
     for_statement: $ => seq(
       'for',
       '(',
       choice(
-        seq($.variable_declaration, $.expression, ';', optional($.expression)),  // for (let i = 0; i < 10; i++)
-        seq(optional($.expression), ';', optional($.expression), ';', optional($.expression))  // for (; i < 10; i++)
+        // for...of 循环: for (let x of array)
+        seq(
+          choice('const', 'let', 'var'),
+          $.identifier,
+          'of',
+          $.expression
+        ),
+        // for...in 循环: for (let key in object)
+        seq(
+          choice('const', 'let', 'var'),
+          $.identifier,
+          'in',
+          $.expression
+        ),
+        // 传统 for 循环: for (let i = 0; i < 10; i++)
+        seq($.variable_declaration, $.expression, ';', optional($.expression)),
+        // for 循环简化形式: for (; i < 10; i++)
+        seq(optional($.expression), ';', optional($.expression), ';', optional($.expression))
       ),
       ')',
       choice($.block_statement, $.statement)
@@ -860,7 +882,17 @@ module.exports = grammar({
       'interface',
       $.identifier,
       optional($.type_parameters),
+      optional($.extends_clause),  // 支持接口继承
       $.object_type
+    ),
+
+    // extends 子句 - 接口可以继承多个接口
+    extends_clause: $ => seq(
+      'extends',
+      commaSep(choice(
+        $.identifier,
+        $.generic_type  // 支持继承泛型接口
+      ))
     ),
 
     type_declaration: $ => seq(

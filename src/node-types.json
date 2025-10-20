@@ -379,11 +379,6 @@
     }
   },
   {
-    "type": "comment",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "component_body",
     "named": true,
     "fields": {},
@@ -741,11 +736,6 @@
     }
   },
   {
-    "type": "escape_sequence",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "export_declaration",
     "named": true,
     "fields": {},
@@ -934,6 +924,25 @@
     }
   },
   {
+    "type": "extends_clause",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "generic_type",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "finally_clause",
     "named": true,
     "fields": {},
@@ -981,6 +990,10 @@
         },
         {
           "type": "expression",
+          "named": true
+        },
+        {
+          "type": "identifier",
           "named": true
         },
         {
@@ -1157,7 +1170,26 @@
           "named": true
         },
         {
+          "type": "import_specifier",
+          "named": true
+        },
+        {
           "type": "string_literal",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "import_specifier",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "identifier",
           "named": true
         }
       ]
@@ -1171,6 +1203,10 @@
       "multiple": true,
       "required": true,
       "types": [
+        {
+          "type": "extends_clause",
+          "named": true
+        },
         {
           "type": "identifier",
           "named": true
@@ -1700,21 +1736,6 @@
     }
   },
   {
-    "type": "string_literal",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": false,
-      "types": [
-        {
-          "type": "escape_sequence",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "subscript_expression",
     "named": true,
     "fields": {},
@@ -2176,10 +2197,6 @@
     "named": false
   },
   {
-    "type": "\"",
-    "named": false
-  },
-  {
     "type": "$",
     "named": false
   },
@@ -2205,10 +2222,6 @@
   },
   {
     "type": "&=",
-    "named": false
-  },
-  {
-    "type": "'",
     "named": false
   },
   {
@@ -2269,14 +2282,6 @@
   },
   {
     "type": "/",
-    "named": false
-  },
-  {
-    "type": "/*",
-    "named": false
-  },
-  {
-    "type": "//",
     "named": false
   },
   {
@@ -2580,10 +2585,6 @@
     "named": false
   },
   {
-    "type": "\\",
-    "named": false
-  },
-  {
     "type": "]",
     "named": false
   },
@@ -2638,6 +2639,11 @@
   {
     "type": "class",
     "named": false
+  },
+  {
+    "type": "comment",
+    "named": true,
+    "extra": true
   },
   {
     "type": "const",
@@ -2744,6 +2750,10 @@
     "named": true
   },
   {
+    "type": "of",
+    "named": false
+  },
+  {
     "type": "private",
     "named": false
   },
@@ -2770,6 +2780,10 @@
   {
     "type": "string",
     "named": false
+  },
+  {
+    "type": "string_literal",
+    "named": true
   },
   {
     "type": "struct",
