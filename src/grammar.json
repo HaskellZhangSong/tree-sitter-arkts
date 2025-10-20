@@ -1609,6 +1609,10 @@
                   {
                     "type": "STRING",
                     "value": "ScrollList"
+                  },
+                  {
+                    "type": "STRING",
+                    "value": "NavDestination"
                   }
                 ]
               },
@@ -1659,6 +1663,10 @@
                   {
                     "type": "STRING",
                     "value": "GridItem"
+                  },
+                  {
+                    "type": "STRING",
+                    "value": "ListItemGroup"
                   }
                 ]
               },
@@ -1760,6 +1768,18 @@
               {
                 "type": "STRING",
                 "value": ")"
+              },
+              {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "container_content_body"
+                  },
+                  {
+                    "type": "BLANK"
+                  }
+                ]
               }
             ]
           }
@@ -3718,8 +3738,28 @@
           "type": "CHOICE",
           "members": [
             {
-              "type": "SYMBOL",
-              "name": "block_statement"
+              "type": "PREC",
+              "value": 3,
+              "content": {
+                "type": "SYMBOL",
+                "name": "builder_function_body"
+              }
+            },
+            {
+              "type": "PREC",
+              "value": 2,
+              "content": {
+                "type": "SYMBOL",
+                "name": "extend_function_body"
+              }
+            },
+            {
+              "type": "PREC",
+              "value": 1,
+              "content": {
+                "type": "SYMBOL",
+                "name": "block_statement"
+              }
             },
             {
               "type": "STRING",

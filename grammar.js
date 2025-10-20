@@ -340,11 +340,11 @@ module.exports = grammar({
       seq('Image', '(', $.expression, ')'),
       seq(choice('TextInput', 'TextArea'), '(', optional($.component_parameters), ')'),
       // 布局容器 - 使用专门的容器内容体
-      seq(choice('Column', 'Row', 'Stack', 'Flex', 'Grid', 'GridRow', 'GridCol', 'List', 'ScrollList'), '(', optional($.component_parameters), ')', optional($.container_content_body)),
+      seq(choice('Column', 'Row', 'Stack', 'Flex', 'Grid', 'GridRow', 'GridCol', 'List', 'ScrollList', 'NavDestination'), '(', optional($.component_parameters), ')', optional($.container_content_body)),
       // 特殊容器项
-      seq(choice('ListItem', 'GridItem'), '(', optional($.component_parameters), ')', optional($.container_content_body)),
-      // 自定义组件
-      seq($.identifier, '(', optional(choice($.component_parameters, commaSep($.expression))), ')')
+      seq(choice('ListItem', 'GridItem', 'ListItemGroup'), '(', optional($.component_parameters), ')', optional($.container_content_body)),
+      // 自定义组件 - 支持容器内容体
+      seq($.identifier, '(', optional(choice($.component_parameters, commaSep($.expression))), ')', optional($.container_content_body))
     )),
 
     // 容器内容体 - 专门用于布局容器的内容，区别于build_body
@@ -689,7 +689,12 @@ module.exports = grammar({
       optional($.type_parameters),
       $.parameter_list,
       optional(seq(':', $.type_annotation)),
-      choice($.block_statement, ';')
+      choice(
+        prec(3, $.builder_function_body),  // @Builder 函数体（最高优先级）
+        prec(2, $.extend_function_body),   // @Extend 函数体
+        prec(1, $.block_statement),        // 普通函数体
+        ';'                                // 抽象方法
+      )
     ),
 
     parameter_list: $ => seq(

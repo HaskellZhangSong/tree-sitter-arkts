@@ -1258,7 +1258,15 @@
           "named": true
         },
         {
+          "type": "builder_function_body",
+          "named": true
+        },
+        {
           "type": "decorator",
+          "named": true
+        },
+        {
+          "type": "extend_function_body",
           "named": true
         },
         {
@@ -2527,6 +2535,10 @@
     "named": false
   },
   {
+    "type": "ListItemGroup",
+    "named": false
+  },
+  {
     "type": "Local",
     "named": false
   },
@@ -2544,6 +2556,10 @@
   },
   {
     "type": "Monitor",
+    "named": false
+  },
+  {
+    "type": "NavDestination",
     "named": false
   },
   {
