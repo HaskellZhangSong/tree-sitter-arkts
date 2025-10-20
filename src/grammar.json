@@ -485,6 +485,35 @@
               "members": [
                 {
                   "type": "STRING",
+                  "value": "struct"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "identifier"
+                },
+                {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "type_parameters"
+                    },
+                    {
+                      "type": "BLANK"
+                    }
+                  ]
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "component_body"
+                }
+              ]
+            },
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "STRING",
                   "value": "default"
                 },
                 {
@@ -497,6 +526,35 @@
                     {
                       "type": "SYMBOL",
                       "name": "class_declaration"
+                    },
+                    {
+                      "type": "SEQ",
+                      "members": [
+                        {
+                          "type": "STRING",
+                          "value": "struct"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "identifier"
+                        },
+                        {
+                          "type": "CHOICE",
+                          "members": [
+                            {
+                              "type": "SYMBOL",
+                              "name": "type_parameters"
+                            },
+                            {
+                              "type": "BLANK"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "component_body"
+                        }
+                      ]
                     },
                     {
                       "type": "SYMBOL",
@@ -1941,7 +1999,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "arrow_function"
+          "name": "ui_builder_arrow_function"
         },
         {
           "type": "CHOICE",
@@ -1969,6 +2027,82 @@
           "value": ")"
         }
       ]
+    },
+    "ui_builder_arrow_function": {
+      "type": "PREC_RIGHT",
+      "value": 1,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "STRING",
+                "value": "async"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "identifier"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "parameter_list"
+              }
+            ]
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": ":"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "type_annotation"
+                  }
+                ]
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          },
+          {
+            "type": "STRING",
+            "value": "=>"
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "PREC",
+                "value": 2,
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "ui_arrow_function_body"
+                }
+              },
+              {
+                "type": "SYMBOL",
+                "name": "expression"
+              }
+            ]
+          }
+        ]
+      }
     },
     "identifier": {
       "type": "PATTERN",
@@ -3520,6 +3654,18 @@
           "members": [
             {
               "type": "STRING",
+              "value": "abstract"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
               "value": "async"
             },
             {
@@ -4374,6 +4520,43 @@
           }
         ]
       }
+    },
+    "ui_arrow_function_body": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "{"
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "ui_custom_component_statement"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "ui_control_flow"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "arkts_ui_element"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "expression_statement"
+              }
+            ]
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "}"
+        }
+      ]
     },
     "function_expression": {
       "type": "SEQ",
@@ -6039,6 +6222,15 @@
       "object_literal"
     ],
     [
+      "block_statement",
+      "ui_arrow_function_body",
+      "object_literal"
+    ],
+    [
+      "ui_arrow_function_body",
+      "object_literal"
+    ],
+    [
       "component_parameters",
       "object_literal"
     ],
@@ -6083,8 +6275,16 @@
       "builder_function_body"
     ],
     [
+      "block_statement",
+      "ui_arrow_function_body"
+    ],
+    [
       "statement",
       "builder_function_body"
+    ],
+    [
+      "statement",
+      "ui_arrow_function_body"
     ],
     [
       "ui_if_statement",
@@ -6096,6 +6296,14 @@
       "extend_function_body"
     ],
     [
+      "arkts_ui_element",
+      "expression"
+    ],
+    [
+      "component_declaration"
+    ],
+    [
+      "decorated_export_declaration",
       "component_declaration"
     ],
     [

@@ -582,6 +582,10 @@
           "named": true
         },
         {
+          "type": "component_body",
+          "named": true
+        },
+        {
           "type": "decorator",
           "named": true
         },
@@ -966,11 +970,11 @@
       "required": true,
       "types": [
         {
-          "type": "arrow_function",
+          "type": "expression",
           "named": true
         },
         {
-          "type": "expression",
+          "type": "ui_builder_arrow_function",
           "named": true
         }
       ]
@@ -1958,6 +1962,64 @@
       "types": [
         {
           "type": "type_parameter",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ui_arrow_function_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "arkts_ui_element",
+          "named": true
+        },
+        {
+          "type": "expression_statement",
+          "named": true
+        },
+        {
+          "type": "ui_control_flow",
+          "named": true
+        },
+        {
+          "type": "ui_custom_component_statement",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "ui_builder_arrow_function",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "expression",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "parameter_list",
+          "named": true
+        },
+        {
+          "type": "type_annotation",
+          "named": true
+        },
+        {
+          "type": "ui_arrow_function_body",
           "named": true
         }
       ]

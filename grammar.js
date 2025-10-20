@@ -21,6 +21,8 @@ module.exports = grammar({
     [$.expression, $.arrow_function],  // 箭头函数与表达式的歧义
     [$.expression, $.state_binding_expression],
     [$.block_statement, $.object_literal],
+    [$.block_statement, $.ui_arrow_function_body, $.object_literal],  // 箭头函数体的歧义：普通块/UI块/对象字面量
+    [$.ui_arrow_function_body, $.object_literal],  // UI箭头函数体与对象字面量的歧义
     [$.component_parameters, $.object_literal],
     [$.expression, $.property_assignment],
     [$.expression, $.property_name],  // 对象方法中标识符的歧义
@@ -33,10 +35,14 @@ module.exports = grammar({
     [$.modifier_chain_expression, $.member_expression],  // 修饰符链 `.xxx()` 与成员访问 `.xxx` 的歧义
     [$.block_statement, $.extend_function_body],  // 普通函数体与 @Extend 函数体的歧义
     [$.block_statement, $.builder_function_body],  // 普通函数体与 @Builder 函数体的歧义
+    [$.block_statement, $.ui_arrow_function_body],  // 普通块语句与UI箭头函数体的歧义
     [$.statement, $.builder_function_body],  // 语句与 @Builder 函数体的歧义
+    [$.statement, $.ui_arrow_function_body],  // 语句与UI箭头函数体的歧义
     [$.ui_if_statement, $.block_statement, $.object_literal],  // ui_if_statement 与 block_statement/object_literal 的歧义
     [$.expression, $.extend_function_body],  // 表达式与 @Extend 函数体的歧义（modifier_chain 既是 expression 也是 extend_function_body的开始）
+    [$.arkts_ui_element, $.expression],  // UI元素既可以是arkts_ui_element也可以是expression（用于ForEach箭头函数返回值）
     [$.component_declaration],  // 支持 @Component export struct 语法的冲突
+    [$.decorated_export_declaration, $.component_declaration],  // @Component export struct 既可以匹配 component_declaration 也可以匹配 decorated_export_declaration
     [$.primary_type, $.qualified_type],  // as 表达式中的类型注解冲突
     [$.primary_type, $.generic_type],  // as 表达式中的泛型类型冲突
     [$.primary_type, $.array_type],  // as 表达式中的数组类型冲突
@@ -112,7 +118,7 @@ module.exports = grammar({
       seq($.identifier, 'as', $.identifier)
     ),
 
-    // 带装饰器的导出声明（用于 @Builder export function、@Observed export class 等）
+    // 带装饰器的导出声明（用于 @Builder export function、@Observed export class、@Component export struct 等）
     decorated_export_declaration: $ => seq(
       repeat1($.decorator),  // 至少一个装饰器
       'export',
@@ -141,10 +147,18 @@ module.exports = grammar({
           optional($.implements_clause),
           $.class_body
         ),
+        // export struct (component)
+        seq(
+          'struct',
+          $.identifier,
+          optional($.type_parameters),
+          $.component_body
+        ),
         // export default
         seq('default', choice(
           $.function_declaration,
           $.class_declaration,
+          seq('struct', $.identifier, optional($.type_parameters), $.component_body),  // export default struct
           $.expression
         ))
       ),
@@ -388,10 +402,25 @@ module.exports = grammar({
       '(',
       $.expression, // 数据源
       ',',
-      $.arrow_function, // 项构建函数
+      $.ui_builder_arrow_function, // 项构建函数（专用于UI上下文）
       optional(seq(',', $.expression)), // key生成器
       ')'
     ),
+
+    // UI构建箭头函数 - 专用于ForEach等UI上下文
+    ui_builder_arrow_function: $ => prec.right(1, seq(
+      optional('async'),
+      choice(
+        $.identifier,
+        $.parameter_list
+      ),
+      optional(seq(':', $.type_annotation)),
+      '=>',
+      choice(
+        prec(2, $.ui_arrow_function_body),  // UI箭头函数体（优先）
+        $.expression  // 单个UI元素表达式
+      )
+    )),
 
     // 基础语法元素
     identifier: $ => /[a-zA-Z_$][a-zA-Z0-9_$]*/,
@@ -654,6 +683,7 @@ module.exports = grammar({
       repeat($.decorator),
       optional(choice('private', 'public', 'protected')),
       optional('static'),
+      optional('abstract'),  // 支持抽象方法
       optional('async'),
       $.identifier,
       optional($.type_parameters),
@@ -805,10 +835,22 @@ module.exports = grammar({
       optional(seq(':', $.type_annotation)),  // 支持返回类型注解
       '=>',
       choice(
-        prec(2, $.block_statement),  // 提高优先级，确保 {} 被优先解析为块语句而不是空对象
-        $.expression
+        prec(2, $.block_statement),  // 普通块语句
+        $.expression  // 表达式
       )
     )),
+
+    // UI箭头函数体 - 用于ForEach等UI上下文中的箭头函数，支持直接返回UI元素
+    ui_arrow_function_body: $ => seq(
+      '{',
+      repeat(choice(
+        $.ui_custom_component_statement,
+        $.ui_control_flow,
+        $.arkts_ui_element,  // 支持UI元素
+        $.expression_statement
+      )),
+      '}'
+    ),
 
     // 函数表达式 - 支持匿名和命名函数表达式
     function_expression: $ => seq(
