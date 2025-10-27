@@ -783,6 +783,10 @@
                   "members": [
                     {
                       "type": "SYMBOL",
+                      "name": "interface_declaration"
+                    },
+                    {
+                      "type": "SYMBOL",
                       "name": "component_declaration"
                     },
                     {

@@ -193,6 +193,7 @@ module.exports = grammar({
         $.function_declaration,  // 无装饰器的函数
         $.variable_declaration,
         seq('default', choice(
+          $.interface_declaration,
           $.component_declaration,
           $.interface_declaration,  // 支持 export default interface
           $.type_declaration,       // 支持 export default type
