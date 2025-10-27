@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### 🐛 Bug 修复
+- 🐛 **修复 `export default interface` 解析失败**
+  - 在 `export_declaration` 的 `default` 分支中优先匹配 `interface_declaration`
+  - 修复 hmosworld 项目 `ZonesItem.ets` 接口默认导出解析错误
+  - 支持带泛型、继承、可选属性、方法签名的接口默认导出
+  - 解析成功率保持 93.14% (163/175)
+
 ---
 
 ## [0.1.7] - 2025-10-20
